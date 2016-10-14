@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<component-configuration
+	xmlns="http://tis.co.jp/nablarch/component-configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://tis.co.jp/nablarch/component-configuration">
+
+	<import file="db-default.xml" />
+	<import file="web/file.xml" />
+
+	<!-- デフォルト帳票コンポーネントの設定 -->
+	<component name="reportCreator"
+		class="nablarch.integration.report.creator.BasicReportCreator">
+		<property name="reportTemplateResolver">
+			<component
+				class="nablarch.integration.report.templateresolver.BasicReportTemplateResolver"></component>
+		</property>
+		<property name="reportExporter">
+			<component class="nablarch.integration.report.exporter.BasicReportExporter">
+				<property name="reportOutputResolver">
+					<component
+						class="nablarch.integration.report.outputresolver.BasicReportOutputResolver"></component>
+				</property>
+			</component>
+		</property>
+	</component>
+
+	<!-- 大量帳票コンポーネントの設定 -->
+	<component name="virtualizerReportCreator"
+		class="nablarch.integration.report.creator.VirtualizerReportCreator">
+		<property name="reportTemplateResolver">
+			<component
+				class="nablarch.integration.report.templateresolver.BasicReportTemplateResolver"></component>
+		</property>
+		<property name="reportExporter">
+			<component class="nablarch.integration.report.exporter.BasicReportExporter">
+				<property name="reportOutputResolver">
+					<component
+						class="nablarch.integration.report.outputresolver.BasicReportOutputResolver"></component>
+				</property>
+			</component>
+		</property>
+	</component>
+
+</component-configuration>
+
