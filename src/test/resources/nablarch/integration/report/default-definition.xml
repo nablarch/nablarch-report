@@ -7,38 +7,26 @@
 	<import file="db-default.xml" />
 	<import file="web/file.xml" />
 
-	<!-- デフォルト帳票コンポーネントの設定 -->
-	<component name="reportCreator"
-		class="nablarch.integration.report.creator.BasicReportCreator">
-		<property name="reportTemplateResolver">
-			<component
-				class="nablarch.integration.report.templateresolver.BasicReportTemplateResolver"></component>
-		</property>
-		<property name="reportExporter">
-			<component class="nablarch.integration.report.exporter.BasicReportExporter">
-				<property name="reportOutputResolver">
-					<component
-						class="nablarch.integration.report.outputresolver.BasicReportOutputResolver"></component>
-				</property>
-			</component>
+	<!-- テンプレートファイルのパス解決を行うクラス -->
+	<component name="reportTemplateResolver" class="nablarch.integration.report.templateresolver.BasicReportTemplateResolver" />
+
+	<!-- 帳票出力処理を行うクラス -->
+	<component name="reportExporter" class="nablarch.integration.report.exporter.BasicReportExporter">
+		<property name="reportOutputResolver">
+			<component class="nablarch.integration.report.outputresolver.BasicReportOutputResolver" />
 		</property>
 	</component>
 
+	<!-- デフォルト帳票コンポーネントの設定 -->
+	<component name="reportCreator" class="nablarch.integration.report.creator.BasicReportCreator">
+		<property name="reportTemplateResolver" ref="reportTemplateResolver" />
+		<property name="reportExporter" ref="reportExporter" />
+	</component>
+
 	<!-- 大量帳票コンポーネントの設定 -->
-	<component name="virtualizerReportCreator"
-		class="nablarch.integration.report.creator.VirtualizerReportCreator">
-		<property name="reportTemplateResolver">
-			<component
-				class="nablarch.integration.report.templateresolver.BasicReportTemplateResolver"></component>
-		</property>
-		<property name="reportExporter">
-			<component class="nablarch.integration.report.exporter.BasicReportExporter">
-				<property name="reportOutputResolver">
-					<component
-						class="nablarch.integration.report.outputresolver.BasicReportOutputResolver"></component>
-				</property>
-			</component>
-		</property>
+	<component name="virtualizerReportCreator" class="nablarch.integration.report.creator.VirtualizerReportCreator">
+		<property name="reportTemplateResolver" ref="reportTemplateResolver" />
+		<property name="reportExporter" ref="reportExporter" />
 	</component>
 
 </component-configuration>

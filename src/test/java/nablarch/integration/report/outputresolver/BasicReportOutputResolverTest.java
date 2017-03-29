@@ -2,32 +2,32 @@ package nablarch.integration.report.outputresolver;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 
 import java.io.File;
-
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import nablarch.integration.report.ReportContext;
 import nablarch.integration.report.ReportException;
 import nablarch.integration.report.ReportParam;
-import nablarch.integration.report.testhelper.ReportTestRule;
+import nablarch.test.support.SystemRepositoryResource;
+import nablarch.test.support.db.helper.DatabaseTestRunner;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
 
 /**
  * {@link BasicReportOutputResolver}のテストクラス。
  * 
  * @author Naoki Tamura
  */
+@RunWith(DatabaseTestRunner.class)
 public class BasicReportOutputResolverTest {
 
-    @ClassRule
-    public static ReportTestRule r = new ReportTestRule();
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
     @Rule
-    public ExpectedException ee = ExpectedException.none();
+    public SystemRepositoryResource repositoryResource = new SystemRepositoryResource("nablarch/integration/report/default-definition.xml");
 
     /**
      * 指定した帳票出力ファイルオブジェクトが取得することが出来ること。
@@ -54,7 +54,7 @@ public class BasicReportOutputResolverTest {
     @Test
     public void testGetReportOutput_NotFind() {
 
-        ee.expect(ReportException.class);
+        expectedException.expect(ReportException.class);
 
         ReportOutputResolver r = new BasicReportOutputResolver();
 
@@ -64,9 +64,6 @@ public class BasicReportOutputResolverTest {
         ctx.addReportParam(param);
 
         r.getReportOutput(ctx);
-
-        fail("誤ったファイルパスを指定した場合は、例外が発生されなければならない。");
-
     }
 
 }
