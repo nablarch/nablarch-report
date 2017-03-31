@@ -29,10 +29,12 @@ apply {
 repositories {
   mavenLocal()
   maven { url "${developLibUrl}" }
+  maven { url 'http://jasperreports.sourceforge.net/maven2' }
+  maven { url 'http://jaspersoft.artifactoryonline.com/jaspersoft/third-party-ce-artifacts/' }
   jcenter()
   
   // サードパーティ製ライブラリの格納リポジトリ
-    if(project.hasProperty('nablarchExtRepoUrl')) {
+  if(project.hasProperty('nablarchExtRepoUrl')) {
        maven { url "${nablarchExtRepoUrl}" }
   }
 }
