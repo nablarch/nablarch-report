@@ -1,7 +1,8 @@
 package nablarch.integration.report;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.junit.Assert.assertThat;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,49 +13,69 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import nablarch.core.ThreadContext;
+import nablarch.core.db.connection.ConnectionFactory;
+import nablarch.core.db.connection.TransactionManagerConnection;
 import nablarch.core.db.statement.SqlResultSet;
-import net.sf.jasperreports.engine.JRException;
-
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-
+import nablarch.core.transaction.TransactionContext;
+import nablarch.core.util.DateUtil;
 import nablarch.integration.report.datasource.SqlResultSetDataSource;
 import nablarch.integration.report.testhelper.CompileUtil;
-import nablarch.integration.report.testhelper.ReportDbAccessSupport;
 import nablarch.integration.report.testhelper.ReportTest1;
-import nablarch.integration.report.testhelper.ReportTestRule;
+import nablarch.test.support.SystemRepositoryResource;
+import nablarch.test.support.db.helper.DatabaseTestRunner;
+import nablarch.test.support.db.helper.VariousDbTestHelper;
+import net.sf.jasperreports.engine.JRException;
+import org.hamcrest.CoreMatchers;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
 
 /**
  * {@link ReportManager}のテストクラス。
  * 
  * @author Naoki Tamura
  */
+@RunWith(DatabaseTestRunner.class)
 public class ReportManagerTest {
 
-    @ClassRule
-    public static ReportTestRule r = new ReportTestRule();;
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
-    public static ReportDbAccessSupport db;
+    @Rule
+    public SystemRepositoryResource repositoryResource = new SystemRepositoryResource("nablarch/integration/report/default-definition.xml");
+
+    private TransactionManagerConnection connection;
 
     @BeforeClass
     public static void beforeClass() throws Throwable {
-
-        db = new ReportDbAccessSupport(r.getTransactionManager());
-
-        List<ReportTest1> list = new ArrayList<ReportTest1>();
-        list.add(db.createData("1", "tttt", 999, new BigDecimal("999.99"),
-                "1999/09/01", "1999-09-01 12:30:11.123"));
-        list.add(db.createData("2", "dddd", 999, new BigDecimal("999.99"),
-                "1999/09/01", "1999-09-01 12:30:11.123"));
-        list.add(db.createData("3", "ssss", 999, new BigDecimal("999.99"),
-                "1999/09/01", "1999-09-01 12:30:11.123"));
-        db.insertReportTest1Entity((ReportTest1[]) list
-                .toArray(new ReportTest1[0]));
+        VariousDbTestHelper.createTable(ReportTest1.class);
+        VariousDbTestHelper.setUpTable(
+                new ReportTest1("1", "tttt", 999, new BigDecimal("999.99"), DateUtil.getDate("19990901"), DateUtil.getParsedDate("19990901123011123", "yyyyMMddHHmmssSSS")),
+                new ReportTest1("2", "dddd", 999, new BigDecimal("999.99"), DateUtil.getDate("19990901"), DateUtil.getParsedDate("19990901123011123", "yyyyMMddHHmmssSSS")),
+                new ReportTest1("3", "ssss", 999, new BigDecimal("999.99"), DateUtil.getDate("19990901"), DateUtil.getParsedDate("19990901123011123", "yyyyMMddHHmmssSSS"))
+        );
 
         CompileUtil.compileReportDirAll("report/ERR001");
         CompileUtil.compileReportDirAll("report/R001");
         CompileUtil.compileReportDirAll("report/R002");
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        ThreadContext.setLanguage(Locale.JAPANESE);
+        ConnectionFactory connectionFactory = repositoryResource.getComponent("connectionFactory");
+        connection = connectionFactory.getConnection(TransactionContext.DEFAULT_TRANSACTION_CONTEXT_KEY);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        ThreadContext.clear();
+        connection.terminate();
     }
 
     /**
@@ -79,17 +100,15 @@ public class ReportManagerTest {
     @Test
     public void testReport() {
 
-        SqlResultSet s = db.executeSql(
-                "SELECT * FROM REPORT_TEST_1 WHERE COL1= '1'", null);
+        ReportTest1 entity = VariousDbTestHelper.findById(ReportTest1.class, "1");
 
         ReportContext ctx = new ReportContext("R001");
-
-        ReportParam param = new ReportParam(s.get(0));
+        ReportParam param = new ReportParam(entity);
         ctx.addReportParam(param);
 
         File report = ReportManager.createReport(ctx);
 
-        assertThat("帳票ファイルが正常に出力されること", report.length() > 0, is(true));
+        assertThat("帳票ファイルが正常に出力されること", report.length(), is(greaterThan(0L)));
     }
 
     /**
@@ -98,23 +117,19 @@ public class ReportManagerTest {
     @Test
     public void testReportFailed() {
 
-        SqlResultSet s = db.executeSql(
-                "SELECT * FROM REPORT_TEST_1 WHERE COL1= '1'", null);
+        ReportTest1 entity = VariousDbTestHelper.findById(ReportTest1.class, "1");
 
         ReportContext ctx = new ReportContext("ERR001");
 
-        ReportParam param = new ReportParam(s.get(0));
+        ReportParam param = new ReportParam(entity);
         ctx.addReportParam(param);
 
-        try {
-            ReportManager.createReport(ctx);
-            fail("JRExceptionが発生し、リスローされる");
-        } catch (ReportException e) {
-            assertThat("元例外の確認", e.getCause(),
-                    is(instanceOf(JRException.class)));
-        }
+        expectedException.expect(ReportException.class);
+        expectedException.expectCause(CoreMatchers.<Throwable>instanceOf(JRException.class));
+
+        ReportManager.createReport(ctx);
     }
-    
+
     /**
      * 帳票ファイルの異常系テスト（パラメータのみ）テスト。パラメータのコンバートで例外処理発生。
      */
@@ -128,21 +143,18 @@ public class ReportManagerTest {
         ReportParam param = new ReportParam(eb);
         ctx.addReportParam(param);
 
-        try {
-            ReportManager.createReport(ctx);
-            fail("JRExceptionが発生し、リスローされる");
-        } catch (ReportException e) {
-            assertThat("元例外の確認", e.getCause(),
-                    is(instanceOf(InvocationTargetException.class)));
-        }
+        expectedException.expect(ReportException.class);
+        expectedException.expectCause(CoreMatchers.<Throwable>instanceOf(InvocationTargetException.class));
+
+        ReportManager.createReport(ctx);
     }
-    
+
     public class ErrorBean{
-        
+
         private String error;
 
         public String getError() {
-            
+
             if(true) throw new RuntimeException();
             return error;
         }
@@ -151,19 +163,18 @@ public class ReportManagerTest {
             this.error = error;
         }
 
-        
     }
 
     /**
      * 帳票ファイルの正常出力（フィールド）テスト。
      */
     @Test
-    public void testReport_list() {
+    public void testReport_list() throws Exception{
 
-        SqlResultSet s = db.executeSql("SELECT * FROM REPORT_TEST_1", null);
+        SqlResultSet resultSet = connection.prepareStatement("SELECT * FROM REPORT_TEST_1").retrieve();
 
         ReportParam param = new ReportParam(new Object(),
-                new SqlResultSetDataSource(s));
+                new SqlResultSetDataSource(resultSet));
 
         List<ReportParam> list = new ArrayList<ReportParam>();
         list.add(param);
@@ -171,7 +182,7 @@ public class ReportManagerTest {
 
         File report = ReportManager.createReport(ctx);
 
-        assertThat("帳票ファイルが正常に出力されること", report.length() > 0, is(true));
+        assertThat("帳票ファイルが正常に出力されること", report.length(), is(greaterThan(0L)));
     }
 
     /**
@@ -180,10 +191,10 @@ public class ReportManagerTest {
     @Test
     public void testReport_list_locale() {
 
-        SqlResultSet s = db.executeSql("SELECT * FROM REPORT_TEST_1", null);
+        SqlResultSet resultSet = connection.prepareStatement("SELECT * FROM REPORT_TEST_1").retrieve();
 
         ReportParam param = new ReportParam(new Object(),
-                new SqlResultSetDataSource(s));
+                new SqlResultSetDataSource(resultSet));
 
         List<ReportParam> list = new ArrayList<ReportParam>();
         list.add(param);
@@ -191,7 +202,7 @@ public class ReportManagerTest {
 
         File report = ReportManager.createReport(ctx);
 
-        assertThat("帳票ファイルが正常に出力されること", report.length() > 0, is(true));
+        assertThat("帳票ファイルが正常に出力されること", report.length(), is(greaterThan(0L)));
     }
 
     /**
@@ -200,42 +211,37 @@ public class ReportManagerTest {
     @Test
     public void testReport_creator() {
 
-        SqlResultSet s = db.executeSql(
-                "SELECT * FROM REPORT_TEST_1 WHERE COL1= '1'", null);
+        ReportTest1 entity = VariousDbTestHelper.findById(ReportTest1.class, "1");
 
-        ReportContext ctx = new ReportContext("virtualizerReportCreator",
-                "R001");
+        ReportContext ctx = new ReportContext("virtualizerReportCreator","R001");
 
-        ReportParam param = new ReportParam(s.get(0));
+        ReportParam param = new ReportParam(entity);
         ctx.addReportParam(param);
 
         File report = ReportManager.createReport(ctx);
 
-        assertThat("帳票ファイルが正常に出力されること", report.length() > 0, is(true));
+        assertThat("帳票ファイルが正常に出力されること", report.length(), is(greaterThan(0L)));
     }
-    
+
     /**
      * 帳票作成クラスにデフォルト以外を指定した場合のテスト（異常系）。パラメータのみ。
      */
     @Test
     public void testReport_creator_Faild() {
 
-        SqlResultSet s = db.executeSql(
-                "SELECT * FROM REPORT_TEST_1 WHERE COL1= '1'", null);
+        ReportTest1 entity = VariousDbTestHelper.findById(ReportTest1.class, "1");
 
         ReportContext ctx = new ReportContext("virtualizerReportCreator",
                 "ERR001");
 
-        ReportParam param = new ReportParam(s.get(0));
+        ReportParam param = new ReportParam(entity);
         ctx.addReportParam(param);
 
-        try {
-            ReportManager.createReport(ctx);
-            fail("JRExceptionが発生し、リスローされる");
-        } catch (ReportException e) {
-            assertThat("元例外の確認", e.getCause(),
-                    is(instanceOf(JRException.class)));
-        }
+        expectedException.expect(ReportException.class);
+        expectedException.expectCause(CoreMatchers.<Throwable>instanceOf(JRException.class));
+
+        ReportManager.createReport(ctx);
+
     }
 
     /**
@@ -244,18 +250,18 @@ public class ReportManagerTest {
     @Test
     public void testReport_creator_list() {
 
-        SqlResultSet s = db.executeSql("SELECT * FROM REPORT_TEST_1", null);
+        SqlResultSet resultSet = connection.prepareStatement("SELECT * FROM REPORT_TEST_1").retrieve();
 
         ReportContext ctx = new ReportContext("virtualizerReportCreator",
                 "R002");
 
         ReportParam param = new ReportParam(new Object(),
-                new SqlResultSetDataSource(s));
+                new SqlResultSetDataSource(resultSet));
         ctx.addReportParam(param);
 
         File report = ReportManager.createReport(ctx);
 
-        assertThat("帳票ファイルが正常に出力されること", report.length() > 0, is(true));
+        assertThat("帳票ファイルが正常に出力されること", report.length(), is(greaterThan(0L)));
     }
 
     /**
@@ -264,12 +270,11 @@ public class ReportManagerTest {
     @Test
     public void testReportStream() {
 
-        SqlResultSet s = db.executeSql(
-                "SELECT * FROM REPORT_TEST_1 WHERE COL1= '1'", null);
+        ReportTest1 entity = VariousDbTestHelper.findById(ReportTest1.class, "1");
 
         ReportContext ctx = new ReportContext("R001");
 
-        ReportParam param = new ReportParam(s.get(0));
+        ReportParam param = new ReportParam(entity);
         ctx.addReportParam(param);
 
         InputStream report = ReportManager.createReportStream(ctx);
@@ -284,12 +289,12 @@ public class ReportManagerTest {
     @Test
     public void testReportStream_list() {
 
-        SqlResultSet s = db.executeSql("SELECT * FROM REPORT_TEST_1", null);
+        SqlResultSet resultSet = connection.prepareStatement("SELECT * FROM REPORT_TEST_1").retrieve();
 
         ReportContext ctx = new ReportContext("R002");
 
         ReportParam param = new ReportParam(new Object(),
-                new SqlResultSetDataSource(s));
+                new SqlResultSetDataSource(resultSet));
         ctx.addReportParam(param);
 
         InputStream report = ReportManager.createReportStream(ctx);
@@ -304,13 +309,12 @@ public class ReportManagerTest {
     @Test
     public void testReportStream_creator() {
 
-        SqlResultSet s = db.executeSql(
-                "SELECT * FROM REPORT_TEST_1 WHERE COL1= '1'", null);
+        ReportTest1 entity = VariousDbTestHelper.findById(ReportTest1.class, "1");
 
         ReportContext ctx = new ReportContext("virtualizerReportCreator",
                 "R001");
 
-        ReportParam param = new ReportParam(s.get(0));
+        ReportParam param = new ReportParam(entity);
         ctx.addReportParam(param);
 
         InputStream report = ReportManager.createReportStream(ctx);
@@ -325,13 +329,13 @@ public class ReportManagerTest {
     @Test
     public void testReportStream_creator_list() {
 
-        SqlResultSet s = db.executeSql("SELECT * FROM REPORT_TEST_1", null);
+        SqlResultSet resultSet = connection.prepareStatement("SELECT * FROM REPORT_TEST_1").retrieve();
 
         ReportContext ctx = new ReportContext("virtualizerReportCreator",
                 "R002");
 
         ReportParam param = new ReportParam(new Object(),
-                new SqlResultSetDataSource(s));
+                new SqlResultSetDataSource(resultSet));
         ctx.addReportParam(param);
 
         InputStream report = ReportManager.createReportStream(ctx);

@@ -1,35 +1,44 @@
 package nablarch.integration.report.templateresolver;
 
-import static org.hamcrest.core.Is.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
 
 import java.io.File;
 import java.util.Locale;
 
+import nablarch.core.ThreadContext;
 import nablarch.integration.report.ReportContext;
-import nablarch.integration.report.testhelper.CompileUtil;
-import net.sf.jasperreports.engine.JREmptyDataSource;
-
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-
 import nablarch.integration.report.ReportParam;
-import nablarch.integration.report.testhelper.ReportTestRule;
+import nablarch.integration.report.testhelper.CompileUtil;
+import nablarch.test.support.SystemRepositoryResource;
+import nablarch.test.support.db.helper.DatabaseTestRunner;
+import net.sf.jasperreports.engine.JREmptyDataSource;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * {@link BasicReportTemplateResolver}のテスト
  * 
  * @author Naoki Tamura
  */
+@RunWith(DatabaseTestRunner.class)
 public class BasicReportTemplateResolverTest {
 
-    @ClassRule
-    public static ReportTestRule r = new ReportTestRule();
+    @Rule
+    public SystemRepositoryResource repositoryResource = new SystemRepositoryResource("nablarch/integration/report/default-definition.xml");
 
     @BeforeClass
     public static void beforeClass() throws Throwable {
+        ThreadContext.setLanguage(Locale.JAPANESE);
         CompileUtil.compileReportDirAll("report/R001");
+    }
+
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        ThreadContext.clear();
     }
 
     /**

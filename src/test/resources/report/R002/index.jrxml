@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 5.6.1.final using JasperReports Library version 5.6.1  -->
-<!-- 2014-12-11T15:39:53 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="REPORT_TEST_1" pageWidth="842" pageHeight="695" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="4be0ca7b-6871-4d84-8717-6ff81807bda6">
 	<property name="ireport.zoom" value="1.0"/>
 	<property name="ireport.x" value="0"/>
@@ -10,10 +8,10 @@
 	<style name="defaultStyle" isDefault="true" fontName="SansSerif" pdfFontName="HeiseiMin-W3" pdfEncoding="UniJIS-UCS2-HW-H" isPdfEmbedded="true"/>
 	<field name="col1" class="java.lang.String"/>
 	<field name="col2" class="java.lang.String"/>
-	<field name="col3" class="java.math.BigDecimal"/>
+	<field name="col3" class="java.lang.Integer"/>
 	<field name="col4" class="java.math.BigDecimal"/>
-	<field name="col5" class="java.sql.Timestamp"/>
-	<field name="col6" class="oracle.sql.TIMESTAMP"/>
+	<field name="col5" class="java.sql.Date"/>
+	<field name="col6" class="java.sql.Timestamp"/>
 	<background>
 		<band splitType="Prevent"/>
 	</background>
@@ -170,7 +168,7 @@
 					<font pdfFontName="HeiseiMin-W3" pdfEncoding="UniJIS-UCS2-H" isPdfEmbedded="true"/>
 					<paragraph leftIndent="10"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{col6}.timestampValue()]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{col6}]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement x="403" y="0" width="133" height="30" uuid="a401547a-3272-4757-92b0-754b56905b4a"/>
