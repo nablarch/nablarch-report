@@ -1,0 +1,24 @@
+language: java
+branches:
+  only:
+  - master
+  - develop
+before_install:
+- chmod +x gradlew
+install: true
+cache:
+  directories:
+  - $HOME/.gradle/caches/
+  - $HOME/.gradle/wrapper/
+script:
+- git clone -b master https://github.com/nablarch/nablarch-ci-script.git $HOME/build-script/
+  && chmod +x $HOME/build-script/travis-ci/*.sh
+- mvn install:install-file -Dfile=lib/iTextAsian-1.0.0.jar -DgroupId=com.lowagie -DartifactId=iTextAsian -Dversion=1.0.0 -Dpackaging=jar
+- $HOME/build-script/travis-ci/install-oracle-jdk6.sh
+- $HOME/build-script/travis-ci/nablarch-build.sh
+- $HOME/build-script/travis-ci/upload-test-report.sh
+before_cache:
+- rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+notifications:
+  slack:
+    secure: YN+0kyamqD1IEeSA9nYaqKekIAt/yNh1DXTNXeI4Nn+yWRnC80qRusGZUyC/00iXIPoBqEVzhtdxq10vMtgh+XqpSebn9YwOIF2EMxc1ZUe7H8L5o51bvBYmqXMvEj7g7Izt8LC32DDHa0HcsqWCEgBNJqXcRrbEQFptTeFHljfYJNbPOQAyBtoEujXYzga9T0ZIkmnIwNPuilHAgqjq2TC1QLytMmZHZG1D0mdx3ExlnBsXhwdvXfM7xSC4yi0t04HtTYn4uLk1nBh1EFBK/bIxoBfmweZKjc0t+xlh6AlQNoEXdwtzYU8uw2BuC8wY+Rv97DIjciqeeBx8inqFkSvNz0g0KhTZYCg4m7q+YaYsd0DqW5FOgoDyJqYPuenjCiM4zOlo28+pKmzvkP914HgFEgItQsnk1Mh4CR+lIMaeJvpcFT1D/gYhSYgpMUmi5EJp56I4Z/W8iTJTRFShmw6Vnh/sbmSWTrZNtoez06pdXKqodxyrtsm7ZfuIr7K7hAMNMv20ASD2WBDevyjLj3ZEKBJpL7r1hg1LyoDdTcUos7iOl4v99v6vo4P81xgTT1Gt2daeCmg7wpHg4OV1XzfpEN5/TawL9RZhq8auNPLGVEOKFOvLrNLo8TdW5lFdEV7G5OV+B9DGXco33Dg/4+zFO4OwMJsGGQ1Ydlkd0xA=
