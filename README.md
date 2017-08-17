@@ -1,5 +1,9 @@
 # nablarch-report
 
+| master | develop |
+|:-----------|:------------|
+|[![Build Status](https://travis-ci.org/nablarch/nablarch-report.svg?branch=master)](https://travis-ci.org/nablarch/nablarch-report)|[![Build Status](https://travis-ci.org/nablarch/nablarch-report.svg?branch=develop)](https://travis-ci.org/nablarch/nablarch-report)|
+
 ## 依存ライブラリ
 
 本モジュールのコンパイルまたはテストには、下記ライブラリを手動でローカルリポジトリへインストールする必要があります。
