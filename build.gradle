@@ -41,7 +41,7 @@ repositories {
 
 dependencyManagement {
   imports {
-    mavenBom 'com.nablarch.profile:nablarch-bom:5u10'
+    mavenBom 'com.nablarch.profile:nablarch-bom:5u11'
   }
   applyMavenExclusions false
 }
