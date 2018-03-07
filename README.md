@@ -1,5 +1,12 @@
 # nablarch-report
 
+**本機能は後述している依存ライブラリが現在入手困難となっているため、今後メンテナンスは行われません。**
+
+**帳票出力機能が必要な場合は、以下のような代替手段を検討してください。**
+
+* **商用製品を利用する**
+* **ブラウザやOfficeのPDF出力機能を利用する**
+
 | master | develop |
 |:-----------|:------------|
 |[![Build Status](https://travis-ci.org/nablarch/nablarch-report.svg?branch=master)](https://travis-ci.org/nablarch/nablarch-report)|[![Build Status](https://travis-ci.org/nablarch/nablarch-report.svg?branch=develop)](https://travis-ci.org/nablarch/nablarch-report)|
